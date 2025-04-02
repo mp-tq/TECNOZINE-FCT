@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -6,9 +5,6 @@ import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:flutter_prueba_mil/screens/widgets/animated_logo.dart';
 import 'package:flutter_prueba_mil/screens/home_screen.dart';
-
-
-
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,154 +38,154 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
     _controller.dispose();
     super.dispose();
   }
+
   Future<void> _resetPassword() async {
-  String email = _usernameController.text;  // Toma el email desde el controlador
-  if (email.isNotEmpty) {
-    try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      
-      // Verifica si el widget sigue montado antes de usar BuildContext
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password reset email sent')),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      // Verifica si el widget sigue montado antes de usar BuildContext
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.message}')),
-        );
-      }
-    }
-  } else {
-    // Si el email está vacío, muestra un mensaje de advertencia
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your email address')),
-      );
-    }
-  }
-}
+    String email = _usernameController.text; // Toma el email desde el controlador
+    if (email.isNotEmpty) {
+      try {
+        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
 
- Future<void> _loginWithEmail() async {
-  if (_formKey.currentState!.validate()) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-    try {
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _usernameController.text,
-        password: _passwordController.text,
-      );
-
-      // Verificar si el widget sigue montado antes de usar BuildContext
-      if (mounted) {
-        Navigator.pop(context); // Cierra el indicador de carga
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Welcome, ${userCredential.user?.displayName ?? 'User'}!')),
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      // Verificar si el widget sigue montado antes de usar BuildContext
-      if (mounted) {
-        Navigator.pop(context); // Cierra el indicador de carga
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'An error occurred')),
-        );
-      }
-    }
-  }
-}
-
-
-Future<void> _loginWithGoogle() async {
-  try {
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) {
-      // El usuario canceló el inicio de sesión
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Google sign-in was canceled')),
-        );
-      }
-      return;
-    }
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    final AuthCredential credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-    UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Welcome, ${userCredential.user?.displayName ?? 'User'}!')),
-      );
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    }
-  } on FirebaseAuthException catch (e) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'An error occurred during Google sign-in')),
-      );
-    }
-  } catch (e) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An unexpected error occurred: $e')),
-      );
-    }
-  }
-}
-
-Future<void> _loginWithFacebook() async {
-  try {
-    final LoginResult result = await FacebookAuth.instance.login();
-
-    if (result.status == LoginStatus.success && result.accessToken != null) {
-      // Obtiene el token correctamente
-      final String accessToken = result.accessToken!.token;
-
-      // Usa el token para obtener credenciales
-      final AuthCredential credential = FacebookAuthProvider.credential(accessToken);
-
-      // Inicia sesión en Firebase con las credenciales
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Welcome, ${userCredential.user?.displayName ?? 'User'}!')),
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        // Verifica si el widget sigue montado antes de usar BuildContext
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Password reset email sent')),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        // Verifica si el widget sigue montado antes de usar BuildContext
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${e.message}')),
+          );
+        }
       }
     } else {
+      // Si el email está vacío, muestra un mensaje de advertencia
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message ?? 'An error occurred during Facebook login')),
+          const SnackBar(content: Text('Please enter your email address')),
         );
       }
     }
-  } catch (e) {
-    if (mounted) {
-      // Maneja errores de autenticación
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+  }
+
+  Future<void> _loginWithEmail() async {
+    if (_formKey.currentState!.validate()) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: _usernameController.text,
+          password: _passwordController.text,
+        );
+
+        // Verificar si el widget sigue montado antes de usar BuildContext
+        if (mounted) {
+          Navigator.pop(context); // Cierra el indicador de carga
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Welcome, ${userCredential.user?.displayName ?? 'User'}!')),
+          );
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        // Verificar si el widget sigue montado antes de usar BuildContext
+        if (mounted) {
+          Navigator.pop(context); // Cierra el indicador de carga
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message ?? 'An error occurred')),
+          );
+        }
+      }
     }
   }
-}
+
+  Future<void> _loginWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        // El usuario canceló el inicio de sesión
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Google sign-in was canceled')),
+          );
+        }
+        return;
+      }
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Welcome, ${userCredential.user?.displayName ?? 'User'}!')),
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'An error occurred during Google sign-in')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An unexpected error occurred: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _loginWithFacebook() async {
+    try {
+      final LoginResult result = await FacebookAuth.instance.login();
+
+      if (result.status == LoginStatus.success && result.accessToken != null) {
+        // Obtiene el token correctamente
+        final String accessToken = result.accessToken!.token;
+
+        // Usa el token para obtener credenciales
+        final AuthCredential credential = FacebookAuthProvider.credential(accessToken);
+
+        // Inicia sesión en Firebase con las credenciales
+        UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Welcome, ${userCredential.user?.displayName ?? 'User'}!')),
+          );
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(result.message ?? 'An error occurred during Facebook login')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        // Maneja errores de autenticación
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -197,7 +193,7 @@ Future<void> _loginWithFacebook() async {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.white,Colors.white],
+            colors: [Color(0xFF0D47A1), Color(0xFF00ACC1)], // Azul y cyan
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -211,7 +207,8 @@ Future<void> _loginWithFacebook() async {
               // Logo animado
               AnimatedLogo(controller: _controller),
               const SizedBox(height: 32.0),
-                            // Campo de texto para el nombre de usuario
+
+              // Campo de texto para el nombre de usuario
               TextFormField(
                 controller: _usernameController,
                 decoration: InputDecoration(
@@ -219,7 +216,7 @@ Future<void> _loginWithFacebook() async {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
-                  prefixIcon: const Icon(Icons.email),
+                  prefixIcon: const Icon(Icons.email, color: Color(0xFF00ACC1)),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
@@ -239,7 +236,7 @@ Future<void> _loginWithFacebook() async {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
-                  prefixIcon: const Icon(Icons.lock),
+                  prefixIcon: const Icon(Icons.lock, color: Color(0xFF00ACC1)),
                 ),
                 obscureText: true,
                 validator: (value) {
@@ -256,18 +253,21 @@ Future<void> _loginWithFacebook() async {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: _resetPassword,
-                  child: const Text('Forgot Password?'),
+                  child: const Text(
+                    'Forgot Password?',
+                    style: TextStyle(color: Color(0xFF00ACC1)),
+                  ),
                 ),
               ),
               const SizedBox(height: 16.0),
 
-                            // Botón para iniciar sesión con correo electrónico
+              // Botón para iniciar sesión con correo electrónico
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _loginWithEmail,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 174, 187, 202),
+                    backgroundColor: const Color(0xFF0D47A1), // Azul oscuro
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
