@@ -26,7 +26,7 @@ dependencies:
   flutter_signin_button: ^2.0.0
   logger: ^1.0.0
   flutter_native_splash: ^2.2.19
-  
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -38,7 +38,15 @@ dev_dependencies:
 flutter:
   assets:
    - assets/smartphone_logo.png
+   - assets/images/
   
   uses-material-design: true
 
-  
+flutter_native_splash:
+  color: "#0D47A1" 
+  image: assets/images/splash_logo.png 
+  android: true
+  ios: true
+  web: false
+
+
