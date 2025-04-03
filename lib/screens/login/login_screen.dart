@@ -3,8 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
-import 'package:flutter_prueba_mil/screens/widgets/animated_logo.dart';
-import 'package:flutter_prueba_mil/screens/home_screen.dart';
+import 'package:flutter_prueba_mil/widgets/animated_logo.dart';
+import 'package:flutter_prueba_mil/screens/home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,7 +13,8 @@ class LoginScreen extends StatefulWidget {
   LoginScreenState createState() => LoginScreenState();
 }
 
-class LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -40,7 +41,8 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
   }
 
   Future<void> _resetPassword() async {
-    String email = _usernameController.text; // Toma el email desde el controlador
+    String email =
+        _usernameController.text; // Toma el email desde el controlador
     if (email.isNotEmpty) {
       try {
         await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
@@ -54,9 +56,9 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
       } on FirebaseAuthException catch (e) {
         // Verifica si el widget sigue montado antes de usar BuildContext
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${e.message}')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
         }
       }
     } else {
@@ -77,16 +79,21 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
         builder: (context) => const Center(child: CircularProgressIndicator()),
       );
       try {
-        UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: _usernameController.text,
-          password: _passwordController.text,
-        );
+        UserCredential userCredential = await FirebaseAuth.instance
+            .signInWithEmailAndPassword(
+              email: _usernameController.text,
+              password: _passwordController.text,
+            );
 
         // Verificar si el widget sigue montado antes de usar BuildContext
         if (mounted) {
           Navigator.pop(context); // Cierra el indicador de carga
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Welcome, ${userCredential.user?.displayName ?? 'User'}!')),
+            SnackBar(
+              content: Text(
+                'Welcome, ${userCredential.user?.displayName ?? 'User'}!',
+              ),
+            ),
           );
           Navigator.push(
             context,
@@ -117,15 +124,21 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
         }
         return;
       }
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithCredential(credential);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Welcome, ${userCredential.user?.displayName ?? 'User'}!')),
+          SnackBar(
+            content: Text(
+              'Welcome, ${userCredential.user?.displayName ?? 'User'}!',
+            ),
+          ),
         );
         Navigator.push(
           context,
@@ -135,7 +148,11 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'An error occurred during Google sign-in')),
+          SnackBar(
+            content: Text(
+              e.message ?? 'An error occurred during Google sign-in',
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -156,14 +173,21 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
         final String accessToken = result.accessToken!.token;
 
         // Usa el token para obtener credenciales
-        final AuthCredential credential = FacebookAuthProvider.credential(accessToken);
+        final AuthCredential credential = FacebookAuthProvider.credential(
+          accessToken,
+        );
 
         // Inicia sesión en Firebase con las credenciales
-        UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+        UserCredential userCredential = await FirebaseAuth.instance
+            .signInWithCredential(credential);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Welcome, ${userCredential.user?.displayName ?? 'User'}!')),
+            SnackBar(
+              content: Text(
+                'Welcome, ${userCredential.user?.displayName ?? 'User'}!',
+              ),
+            ),
           );
           Navigator.push(
             context,
@@ -173,16 +197,20 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(result.message ?? 'An error occurred during Facebook login')),
+            SnackBar(
+              content: Text(
+                result.message ?? 'An error occurred during Facebook login',
+              ),
+            ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         // Maneja errores de autenticación
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     }
   }
@@ -279,17 +307,11 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
               const SizedBox(height: 16.0),
 
               // Botón para iniciar sesión con Google
-              SignInButton(
-                Buttons.Google,
-                onPressed: _loginWithGoogle,
-              ),
+              SignInButton(Buttons.Google, onPressed: _loginWithGoogle),
               const SizedBox(height: 16.0),
 
               // Botón para iniciar sesión con Facebook
-              SignInButton(
-                Buttons.Facebook,
-                onPressed: _loginWithFacebook,
-              ),
+              SignInButton(Buttons.Facebook, onPressed: _loginWithFacebook),
             ],
           ),
         ),
