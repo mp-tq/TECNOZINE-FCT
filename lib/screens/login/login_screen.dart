@@ -3,6 +3,8 @@ import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:flutter_prueba_mil/widgets/animated_logo.dart';
 import 'package:flutter_prueba_mil/screens/home/home_screen.dart';
 import 'package:flutter_prueba_mil/services/auth_service.dart';
+import 'package:flutter_prueba_mil/services/user_service.dart';
+import 'package:logger/logger.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,7 +19,12 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
   final _formKey = GlobalKey<FormState>();
   late AnimationController _controller;
   final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
   bool _isLoading = false;
+  bool _isPasswordVisible = false; // Nueva variable para controlar la visibilidad de la contraseña
+
+  // Usamos Logger para registrar eventos y errores
+  final Logger _logger = Logger();
 
   @override
   void initState() {
@@ -62,6 +69,9 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
       );
+
+      // Usamos el Logger para registrar el error
+      _logger.e('Error resetting password: $e');
     }
   }
 
@@ -71,19 +81,35 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
     setState(() => _isLoading = true);
 
     try {
-      await _authService.loginWithEmail(
-        _usernameController.text,
-        _passwordController.text,
-      );
+      // Obtener el usuario por correo electrónico
+      final user = await _userService.getUserByEmail(_usernameController.text);
 
-      if (!mounted) return;
+      if (user == null) {
+        if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not found')),
+        );
+        return;
+      }
+
+      // Validar la contraseña
+      if (user['password'] != _passwordController.text) {
+        if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid password')),
+        );
+        return;
+      }
+
+      // Login exitoso
+      if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed: ${e.toString()}')),
@@ -99,18 +125,21 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
     try {
       await _authService.loginWithGoogle();
 
-      if (!mounted) return;
+      if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Google sign-in failed: ${e.toString()}')),
       );
+
+      // Usamos el Logger para registrar el error
+      _logger.e('Google sign-in failed: $e');
     }
   }
 
@@ -118,18 +147,21 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
     try {
       await _authService.loginWithFacebook();
 
-      if (!mounted) return;
+      if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Facebook sign-in failed: ${e.toString()}')),
       );
+
+      // Usamos el Logger para registrar el error
+      _logger.e('Facebook sign-in failed: $e');
     }
   }
 
@@ -139,7 +171,7 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF0D47A1), Color(0xFF00ACC1)], // Azul y cyan
+            colors: [Color(0xFF0D47A1), Color(0xFF00ACC1)], 
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -175,6 +207,7 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _passwordController,
+                obscureText: !_isPasswordVisible,  // Cambiar la visibilidad de la contraseña
                 decoration: InputDecoration(
                   labelText: 'Password',
                   labelStyle: const TextStyle(color: Colors.black87),
@@ -184,8 +217,18 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                   prefixIcon: const Icon(Icons.lock, color: Color(0xFF00ACC1)),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      color: const Color(0xFF00ACC1),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible; // Alternar la visibilidad
+                      });
+                    },
+                  ),
                 ),
-                obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your password';
@@ -232,3 +275,4 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
     );
   }
 }
+
