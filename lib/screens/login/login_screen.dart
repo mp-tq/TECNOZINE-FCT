@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_prueba_mil/providers/user_provider.dart';
 import 'package:flutter_prueba_mil/widgets/animated_logo.dart';
 import 'package:flutter_prueba_mil/screens/home/home_screen.dart';
-import 'package:flutter_prueba_mil/services/auth_service.dart';
 import 'package:flutter_prueba_mil/services/user_service.dart';
 import 'package:logger/logger.dart';
 
@@ -14,17 +15,14 @@ class LoginScreen extends StatefulWidget {
 }
 
 class LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   late AnimationController _controller;
-  final AuthService _authService = AuthService();
   final UserService _userService = UserService();
-  bool _isLoading = false;
-  bool _isPasswordVisible = false; // Nueva variable para controlar la visibilidad de la contraseña
-
-  // Usamos Logger para registrar eventos y errores
   final Logger _logger = Logger();
+  bool _isLoading = false;
+  bool _isPasswordVisible = false;
 
   @override
   void initState() {
@@ -37,131 +35,57 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
-    if (_controller.isAnimating) {
-      _controller.stop();
-    }
     _controller.dispose();
     super.dispose();
   }
 
-  Future<void> _handleResetPassword() async {
-    if (_usernameController.text.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter your email to reset password')),
-      );
-      return;
-    }
-
-    try {
-      await _authService.resetPassword(_usernameController.text);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password reset email sent')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
-
-      // Usamos el Logger para registrar el error
-      _logger.e('Error resetting password: $e');
-    }
-  }
-
-  Future<void> _handleLoginWithEmail() async {
+  Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
     try {
-      // Obtener el usuario por correo electrónico
-      final user = await _userService.getUserByEmail(_usernameController.text);
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final email = _emailController.text;
+      final password = _passwordController.text;
+      final user = await _userService.getUserByEmail(email);
+
+      if (!mounted) return;
 
       if (user == null) {
-        if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User not found')),
-        );
+        _showSnackbar('User not found');
         return;
       }
 
-      // Validar la contraseña
-      if (user['password'] != _passwordController.text) {
-        if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid password')),
-        );
+      final storedPassword = user['password'] as String?;
+      if (storedPassword == null || storedPassword != password) {
+        _showSnackbar('Invalid email or password');
         return;
       }
 
-      // Login exitoso
-      if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      userProvider.setUser(user['email'], user['name']);
+      _navigateToHome();
     } catch (e) {
-      if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: ${e.toString()}')),
-      );
+      _showSnackbar('Login failed: $e');
+      _logger.e('Login failed: $e');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _handleLoginWithGoogle() async {
-    try {
-      await _authService.loginWithGoogle();
+  void _showSnackbar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
 
-      if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
-
+  void _navigateToHome() {
+    if (mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
-    } catch (e) {
-      if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Google sign-in failed: ${e.toString()}')),
-      );
-
-      // Usamos el Logger para registrar el error
-      _logger.e('Google sign-in failed: $e');
-    }
-  }
-
-  Future<void> _handleLoginWithFacebook() async {
-    try {
-      await _authService.loginWithFacebook();
-
-      if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } catch (e) {
-      if (!mounted) return;  // Verificar que el widget está montado antes de usar BuildContext
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Facebook sign-in failed: ${e.toString()}')),
-      );
-
-      // Usamos el Logger para registrar el error
-      _logger.e('Facebook sign-in failed: $e');
     }
   }
 
@@ -171,7 +95,7 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF0D47A1), Color(0xFF00ACC1)], 
+            colors: [Color(0xFF0D47A1), Color(0xFF00ACC1)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -184,95 +108,68 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
             children: [
               AnimatedLogo(controller: _controller),
               const SizedBox(height: 32.0),
-              TextFormField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  labelStyle: const TextStyle(color: Colors.black87),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  prefixIcon: const Icon(Icons.email, color: Color(0xFF00ACC1)),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  return null;
-                },
-              ),
+              _buildValidatedTextField(_emailController, 'Email', Icons.email, false),
               const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: !_isPasswordVisible,  // Cambiar la visibilidad de la contraseña
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  labelStyle: const TextStyle(color: Colors.black87),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  prefixIcon: const Icon(Icons.lock, color: Color(0xFF00ACC1)),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                      color: const Color(0xFF00ACC1),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isPasswordVisible = !_isPasswordVisible; // Alternar la visibilidad
-                      });
-                    },
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
-                  }
-                  return null;
-                },
-              ),
+              _buildValidatedTextField(_passwordController, 'Password', Icons.lock, true),
               const SizedBox(height: 8.0),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: _handleResetPassword,
-                  child: const Text(
-                    'Forgot Password?',
-                    style: TextStyle(color: Color(0xFF00ACC1)),
-                  ),
+                  onPressed: () {},
+                  child: const Text('Forgot Password?', style: TextStyle(color: Color(0xFF00ACC1))),
                 ),
               ),
               const SizedBox(height: 16.0),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLoginWithEmail,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1565C0),
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Login', style: TextStyle(color: Colors.white)),
-                ),
-              ),
+              _buildLoginButton(),
               const SizedBox(height: 16.0),
-              SignInButton(Buttons.Google, onPressed: _handleLoginWithGoogle),
+              SignInButton(Buttons.Google, onPressed: () {}),
               const SizedBox(height: 16.0),
-              SignInButton(Buttons.Facebook, onPressed: _handleLoginWithFacebook),
+              SignInButton(Buttons.Facebook, onPressed: () {}),
             ],
           ),
         ),
       ),
     );
   }
-}
 
+  Widget _buildValidatedTextField(TextEditingController controller, String label, IconData icon, bool isPassword) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword && !_isPasswordVisible,
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+        prefixIcon: Icon(icon, color: Color(0xFF00ACC1)),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Color(0xFF00ACC1)),
+                onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+              )
+            : null,
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter your $label';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildLoginButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _handleLogin,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF1565C0),
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+        ),
+        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Login', style: TextStyle(color: Colors.white)),
+      ),
+    );
+  }
+}

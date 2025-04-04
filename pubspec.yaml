@@ -26,6 +26,7 @@ dependencies:
   flutter_signin_button: ^2.0.0
   logger: ^1.0.0
   flutter_native_splash: ^2.2.19
+  provider: ^6.1.4
 
 dev_dependencies:
   flutter_test:

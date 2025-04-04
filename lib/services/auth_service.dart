@@ -13,8 +13,16 @@ class AuthService {
     }
   }
 
-  Future<UserCredential> loginWithEmail(String email, String password) async {
-    return await _auth.signInWithEmailAndPassword(email: email, password: password);
+  Future<User?> loginWithEmail(String email, String password) async {
+    try {
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return userCredential.user;
+    } catch (e) {
+      throw Exception('Login failed: $e');
+    }
   }
 
   Future<UserCredential> loginWithGoogle() async {
@@ -38,5 +46,9 @@ class AuthService {
     } else {
       throw Exception(result.message ?? 'An error occurred during Facebook login');
     }
+  }
+
+  Future<void> logout() async {
+    await _auth.signOut();
   }
 }
