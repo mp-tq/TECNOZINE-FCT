@@ -3,9 +3,7 @@ import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_prueba_mil/providers/user_provider.dart';
 import 'package:flutter_prueba_mil/widgets/animated_logo.dart';
-import 'package:flutter_prueba_mil/screens/home/home_screen.dart';
-import 'package:flutter_prueba_mil/services/user_service.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_prueba_mil/controllers/login_controller.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,8 +17,6 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   late AnimationController _controller;
-  final UserService _userService = UserService();
-  final Logger _logger = Logger();
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 
@@ -43,49 +39,19 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
 
     try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
-      final email = _emailController.text;
-      final password = _passwordController.text;
-      final user = await _userService.getUserByEmail(email);
-
-      if (!mounted) return;
-
-      if (user == null) {
-        _showSnackbar('User not found');
-        return;
-      }
-
-      final storedPassword = user['password'] as String?;
-      if (storedPassword == null || storedPassword != password) {
-        _showSnackbar('Invalid email or password');
-        return;
-      }
-
-      userProvider.setUser(user['email'], user['name']);
-      _navigateToHome();
-    } catch (e) {
-      _showSnackbar('Login failed: $e');
-      _logger.e('Login failed: $e');
+      await LoginController.handleLogin(
+        context: context,
+        email: _emailController.text,
+        password: _passwordController.text,
+        userProvider: userProvider,
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  void _showSnackbar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-    }
-  }
-
-  void _navigateToHome() {
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
     }
   }
 
