@@ -4,7 +4,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:flutter_prueba_mil/widgets/animated_logo.dart';
-import 'package:flutter_prueba_mil/screens/home/home_screen.dart';
+
+import 'package:flutter_prueba_mil/screens/main_screen/main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -97,7 +98,7 @@ class LoginScreenState extends State<LoginScreen>
           );
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const MainScreen()),
           );
         }
       } on FirebaseAuthException catch (e) {
@@ -142,7 +143,7 @@ class LoginScreenState extends State<LoginScreen>
         );
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -191,7 +192,7 @@ class LoginScreenState extends State<LoginScreen>
           );
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const MainScreen()),
           );
         }
       } else {

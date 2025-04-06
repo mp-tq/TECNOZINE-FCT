@@ -19,7 +19,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final DatabaseService databaseService = DatabaseService();
 
-  //Obtener productos desde Firestore
   Stream<QuerySnapshot> getProductsFromFirestore() {
     return FirebaseFirestore.instance.collection('products').snapshots();
   }
@@ -28,16 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 210, 228, 237),
-      appBar: AppBar(
-        centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 3, 64, 93),
-        title: const Text(
-          "Productos",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-      ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: getProductsFromFirestore(), // Escuchar cambios en Firestore
+        stream: getProductsFromFirestore(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
