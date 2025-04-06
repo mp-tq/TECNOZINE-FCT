@@ -16,7 +16,6 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _navigateToLogin() async {
-    // Aumenta el tiempo de espera aquí (por ejemplo, 5 segundos)
     await Future.delayed(const Duration(seconds: 5));
     if (!mounted) return;
     Navigator.pushReplacement(
@@ -40,14 +39,15 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/images/splash_logo.png', // Ruta de tu logo
-                width: 150,
-                height: 150,
+              // Logo más grande
+              SizedBox(
+                width: 250, 
+                height: 250, 
+                child: Image.asset('assets/images/splash_logo.png'), // Ruta de tu logo
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 20), // Espaciado entre el logo y el texto
               const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                color: Colors.white,
               ),
               const SizedBox(height: 20),
               const Text(
