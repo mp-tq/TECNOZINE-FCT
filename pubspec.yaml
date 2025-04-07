@@ -42,7 +42,10 @@ dependencies:
   google_sign_in: ^5.4.3
   flutter_facebook_auth: ^5.0.2
   flutter_signin_button: ^2.0.0
-
+  firebase_messaging: ^15.2.4
+  flutter_local_notifications: ^14.1.5
+  device_info_plus: ^10.0.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
