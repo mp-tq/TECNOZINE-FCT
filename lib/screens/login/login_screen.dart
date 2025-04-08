@@ -5,6 +5,7 @@ import 'package:flutter_prueba_mil/providers/user_provider.dart';
 import 'package:flutter_prueba_mil/widgets/animated_logo.dart';
 import 'package:flutter_prueba_mil/controllers/login_controller.dart';
 
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -55,6 +56,26 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
     }
   }
 
+  Future<void> _handleGoogleLogin() async {
+  try {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final user = await LoginController.handleGoogleLogin(); // Llama a tu controlador o servicio
+    if (user != null && mounted) {
+      userProvider.setUser(user.email ?? '', user.displayName ?? 'Google User');
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home'); // Navega a la pantalla principal
+      }
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -88,7 +109,7 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
               const SizedBox(height: 16.0),
               _buildLoginButton(),
               const SizedBox(height: 16.0),
-              SignInButton(Buttons.Google, onPressed: () {}),
+              SignInButton(Buttons.Google, onPressed: _handleGoogleLogin),
               const SizedBox(height: 16.0),
               SignInButton(Buttons.Facebook, onPressed: () {}),
             ],

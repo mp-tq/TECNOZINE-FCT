@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_prueba_mil/providers/user_provider.dart';
 import 'package:flutter_prueba_mil/services/user_service.dart';
 import 'package:flutter_prueba_mil/screens/home/home_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginController {
   static final UserService _userService = UserService();
@@ -34,6 +36,24 @@ class LoginController {
     } catch (e) {
       if (!context.mounted) return;
       _showSnackbar(context, 'Login failed: $e');
+    }
+  }
+
+  static Future<User?> handleGoogleLogin() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        throw Exception('Google sign-in was canceled');
+      }
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      return userCredential.user;
+    } catch (e) {
+      throw Exception('Google login failed: $e');
     }
   }
 
