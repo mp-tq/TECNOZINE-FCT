@@ -1,13 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_prueba_mil/screens/export/export_options_screen.dart';
+import 'package:flutter_prueba_mil/screens/history/history_screen.dart';
+import 'package:flutter_prueba_mil/services/database_service.dart';
 import '../../widgets/product_dialog.dart';
-import '../../services/database_service.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
+
+  
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -18,8 +23,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController precioController = TextEditingController();
 
   final DatabaseService databaseService = DatabaseService();
+  
 
-  //Obtener productos desde Firestore
+  // Obtener productos desde Firestore
   Stream<QuerySnapshot> getProductsFromFirestore() {
     return FirebaseFirestore.instance.collection('products').snapshots();
   }
@@ -27,6 +33,60 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            const UserAccountsDrawerHeader(
+              accountName: Text('Usuario'),
+              accountEmail: Text('usuario@ejemplo.com'),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.person, size: 50.0),
+              ),
+            ),
+
+   // Opcion de Menú 1 (Inicio)
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Inicio'),
+              onTap: () {
+                Navigator.pop(context); 
+              },
+            ),
+   // Menú 2 Historial movimientos
+            ListTile(
+              leading: const Icon(Icons.history),
+              title: const Text('Historial de Movimientos'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                );
+              },
+            ),
+   // Menú 3 Exportar 
+            ListTile(
+              leading: const Icon(Icons.download),
+              title: const Text('Exportar'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ExportOptionsScreen()),
+                );
+              },
+            ),
+    // Opción de menú 4 (Configuración)
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Configuración'),
+              onTap: () {
+                Navigator.pop(context);  
+              },
+            ),
+          ],
+        ),
+      ),
       backgroundColor: const Color.fromARGB(255, 210, 228, 237),
       appBar: AppBar(
         centerTitle: true,
@@ -74,79 +134,79 @@ class _HomeScreenState extends State<HomeScreen> {
                   subtitle: Text(productData['descripcion'].toString()),
                   trailing: PopupMenuButton(
                     icon: const Icon(Icons.more_vert),
-                    itemBuilder:
-                        (context) => [
-                          PopupMenuItem(
-                            value: 1,
-                            child: ListTile(
-                              onTap: () {
-                                Navigator.pop(context);
-                                productoController.text =
-                                    productData['producto'].toString();
-                                categoriaController.text =
-                                    productData['categoria'].toString();
-                                descripcionController.text =
-                                    productData['descripcion'].toString();
-                                stockController.text =
-                                    productData['stock'].toString();
-                                precioController.text =
-                                    productData['precio'].toString();
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 1,
+                        child: ListTile(
+                          onTap: () {
+                            Navigator.pop(context);
+                            productoController.text =
+                                productData['producto'].toString();
+                            categoriaController.text =
+                                productData['categoria'].toString();
+                            descripcionController.text =
+                                productData['descripcion'].toString();
+                            stockController.text =
+                                productData['stock'].toString();
+                            precioController.text =
+                                productData['precio'].toString();
 
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return ProductDialog(
-                                      producto: "Actualizar producto",
-                                      descripcion: "Actualizar",
-                                      categoria: "Actualizar",
-                                      stock: "Actualizar",
-                                      precio: "Actualizar",
-                                      productoController: productoController,
-                                      descripcionController:
-                                          descripcionController,
-                                      categoriaController: categoriaController,
-                                      stockController: stockController,
-                                      precioController: precioController,
-                                      onPressed: () {
-                                        databaseService.updateProduct(
-                                          products[index].id,
-                                          {
-                                            'producto': productoController.text,
-                                            'descripcion':
-                                                descripcionController.text,
-                                            'categoria':
-                                                categoriaController.text,
-                                            'stock': stockController.text,
-                                            'precio': precioController.text,
-                                          },
-                                        );
-                                        Navigator.pop(context);
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return ProductDialog(
+                                  producto: "Actualizar producto",
+                                  descripcion: "Actualizar",
+                                  categoria: "Actualizar",
+                                  stock: "Actualizar",
+                                  precio: "Actualizar",
+                                  productoController: productoController,
+                                  descripcionController:
+                                      descripcionController,
+                                  categoriaController: categoriaController,
+                                  stockController: stockController,
+                                  precioController: precioController,
+                                  onPressed: () {
+                                    databaseService.updateProduct(
+                                      products[index].id,
+                                      {
+                                        'producto': productoController.text,
+                                        'descripcion':
+                                            descripcionController.text,
+                                        'categoria':
+                                            categoriaController.text,
+                                        'stock': stockController.text,
+                                        'precio': precioController.text,
                                       },
                                     );
+                                    Navigator.pop(context);
                                   },
                                 );
                               },
-                              leading: const Icon(Icons.edit),
-                              title: const Text("Editar"),
-                            ),
-                          ),
-                          PopupMenuItem(
-                            child: ListTile(
-                              onTap: () {
-                                Navigator.pop(context);
-                                databaseService.deleteProduct(
-                                  products[index].id,
-                                );
-                              },
-                              leading: const Icon(Icons.delete),
-                              title: const Text("Eliminar"),
-                            ),
-                          ),
-                        ],
+                            );
+                          },
+                          leading: const Icon(Icons.edit),
+                          title: const Text("Editar"),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        child: ListTile(
+                          onTap: () {
+                            Navigator.pop(context);
+                            databaseService.deleteProduct(
+                              products[index].id,
+                            );
+                          },
+                          leading: const Icon(Icons.delete),
+                          title: const Text("Eliminar"),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
             },
+            padding: const EdgeInsets.only(bottom: 90.0),
           );
         },
       ),

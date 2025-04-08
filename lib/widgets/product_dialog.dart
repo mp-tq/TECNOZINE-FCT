@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/database_service.dart';  
 
 class ProductDialog extends StatelessWidget {
   final String producto;
@@ -71,11 +72,41 @@ class ProductDialog extends StatelessWidget {
             TextField(controller: stockController, decoration: const InputDecoration(labelText: "Stock")),
             TextField(controller: precioController, decoration: const InputDecoration(labelText: "Precio")),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: onPressed, child: Text(descripcion)),
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
-    );
-  }
-}
+            ElevatedButton(
+              onPressed: () {
+    
+                final productoData = {
+                  'producto': productoController.text,
+                  'descripcion': descripcionController.text,
+                  'categoria': categoriaController.text,
+                  'stock': stockController.text,
+                  'precio': precioController.text,
+                };
+
+                if (productoController.text.isNotEmpty) {
+  
+                  String productoId = 'productoId'; 
+                  DatabaseService().updateProduct(productoId, productoData);
+  
+                      // Registro del movimiento (entrada o salida)
+                      int cantidadMovida = int.parse(stockController.text);
+                      if (cantidadMovida > 0) {
+                        DatabaseService().addMovement(
+                          producto: productoController.text,
+                          tipo: 'entrada',
+                          cantidad: cantidadMovida,
+                          comentario: 'Nuevo stock añadido',
+                                        );
+                                      }
+                                    }
+                            onPressed();
+                          },
+                          child: Text(descripcion),  
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ),
+                  ),
+                );
+              }
+            }
