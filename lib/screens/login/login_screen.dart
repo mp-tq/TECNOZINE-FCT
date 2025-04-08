@@ -75,7 +75,6 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
   }
 }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
