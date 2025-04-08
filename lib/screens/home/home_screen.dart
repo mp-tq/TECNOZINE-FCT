@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_prueba_mil/screens/export/export_options_screen.dart';
 import 'package:flutter_prueba_mil/screens/history/history_screen.dart';
 import 'package:flutter_prueba_mil/services/database_service.dart';
+import 'package:flutter_prueba_mil/providers/user_provider.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/product_dialog.dart';
 
 
@@ -21,7 +23,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController categoriaController = TextEditingController();
   final TextEditingController stockController = TextEditingController();
   final TextEditingController precioController = TextEditingController();
-
   final DatabaseService databaseService = DatabaseService();
   
 
@@ -32,6 +33,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+
     return Scaffold(
       drawer: Drawer(
         child: ListView(
@@ -90,14 +93,23 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color.fromARGB(255, 210, 228, 237),
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 3, 64, 93),
-        title: const Text(
-          "Productos",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        backgroundColor: const Color(0xFF03405D),
+        title: Text(
+          "Productos - ${userProvider.name ?? 'Guest'}",
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              userProvider.clearUser();
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: getProductsFromFirestore(), // Escuchar cambios en Firestore
+        stream: getProductsFromFirestore(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -112,24 +124,15 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: products.length,
             itemBuilder: (context, index) {
               var productData = products[index].data() as Map<String, dynamic>;
-
               return Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 margin: const EdgeInsets.all(10),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   leading: CircleAvatar(child: Text((index + 1).toString())),
                   title: Text(
                     productData['producto'].toString(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
                   ),
                   subtitle: Text(productData['descripcion'].toString()),
                   trailing: PopupMenuButton(
