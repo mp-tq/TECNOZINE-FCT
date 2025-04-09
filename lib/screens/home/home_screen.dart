@@ -248,6 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     );
                   },
+                  padding: const EdgeInsets.only(bottom: 90.0),
                 );
               },
             ),
