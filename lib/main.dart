@@ -5,11 +5,13 @@ import 'package:flutter_prueba_mil/screens/login/login_screen.dart';
 import 'package:flutter_prueba_mil/screens/home/home_screen.dart';
 import 'package:flutter_prueba_mil/providers/user_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_prueba_mil/services/notificaciones_service.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await NotificacionesService().inicializarNotificaciones();
   runApp(const MyApp());
 }
 
