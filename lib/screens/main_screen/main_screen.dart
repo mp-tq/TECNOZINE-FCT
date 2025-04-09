@@ -1,6 +1,7 @@
+// main_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_prueba_mil/screens/home/home_screen.dart';
-import 'package:flutter_prueba_mil/screens/busqueda/busqueda_filtrado.dart';
+import 'package:flutter_prueba_mil/screens/home/home_screen.dart' as home;
+import 'package:flutter_prueba_mil/screens/busqueda/busqueda_filtrado.dart' as busqueda;
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -13,8 +14,8 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const HomeScreen(),
-    const BusquedaFiltradoScreen(),
+    const home.HomeScreen(),  // Usamos el prefijo "home" para acceder a HomeScreen
+    const busqueda.BusquedaFiltradoScreen(),  // Usamos el prefijo "busqueda" para acceder a BusquedaFiltradoScreen
   ];
 
   final List<String> _titles = ["Productos", "Filtrar Productos"];
