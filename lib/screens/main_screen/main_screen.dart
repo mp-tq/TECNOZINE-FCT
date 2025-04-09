@@ -1,7 +1,8 @@
-// main_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_prueba_mil/screens/home/home_screen.dart' as home;
 import 'package:flutter_prueba_mil/screens/busqueda/busqueda_filtrado.dart' as busqueda;
+import 'package:provider/provider.dart';
+import 'package:flutter_prueba_mil/providers/theme_provider.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -14,14 +15,17 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const home.HomeScreen(),  // Usamos el prefijo "home" para acceder a HomeScreen
-    const busqueda.BusquedaFiltradoScreen(),  // Usamos el prefijo "busqueda" para acceder a BusquedaFiltradoScreen
+    const home.HomeScreen(),
+    const busqueda.BusquedaFiltradoScreen(),
   ];
 
   final List<String> _titles = ["Productos", "Filtrar Productos"];
 
   @override
   Widget build(BuildContext context) {
+    // Obtener el estado del tema desde el provider
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_titles[_currentIndex]),
@@ -41,6 +45,22 @@ class _MainScreenState extends State<MainScreen> {
             _currentIndex = index;
           });
         },
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            ListTile(
+              title: Text('Modo Oscuro/Claro'),
+              trailing: Switch(
+                value: themeProvider.isDarkMode,
+                onChanged: (value) {
+                  themeProvider.toggleTheme(value);
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -2,10 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_prueba_mil/screens/export/export_options_screen.dart';
 import 'package:flutter_prueba_mil/screens/history/history_screen.dart';
-import 'package:flutter_prueba_mil/screens/login/login_screen.dart'; // Asegúrate de importar la pantalla de login
+import 'package:flutter_prueba_mil/screens/login/login_screen.dart'; 
 import 'package:flutter_prueba_mil/services/database_service.dart';
 import 'package:flutter_prueba_mil/providers/user_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart'; 
+import 'package:flutter_prueba_mil/providers/theme_provider.dart';
 import '../../widgets/product_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -33,18 +34,36 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context); // Acceder al ThemeProvider
+
+    // Detectar si el tema es oscuro
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
+            // Cambiar solo en el UserAccountsDrawerHeader
             UserAccountsDrawerHeader(
-              accountName: Text(userProvider.name ?? 'Cargando...'),
-              accountEmail: Text(userProvider.email ?? 'Cargando...'),
+              accountName: Text(
+                userProvider.name ?? 'Cargando...',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black, // Solo afecta el color del nombre
+                ),
+              ),
+              accountEmail: Text(
+                userProvider.email ?? 'Cargando...',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black, // Solo afecta el color del email
+                ),
+              ),
               currentAccountPicture: const CircleAvatar(
                 backgroundColor: Colors.white,
                 child: Icon(Icons.person, size: 50.0),
+              ),
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey[850] : Colors.blue, // Fondo del header solo en el Drawer
               ),
             ),
             ListTile(
@@ -74,36 +93,44 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
+            // Switch para cambiar entre el modo claro y oscuro
             ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Configuración'),
-              onTap: () {
-                Navigator.pop(context);
-              },
+              leading: const Icon(Icons.brightness_6),
+              title: Text(themeProvider.isDarkMode ? 'Modo Claro' : 'Modo Oscuro'),
+              trailing: Switch(
+                value: themeProvider.isDarkMode,
+                onChanged: (value) {
+                  themeProvider.toggleTheme(value);  // Cambiar el tema
+                  Navigator.pop(context);  // Cerrar el Drawer
+                },
+              ),
             ),
-            // Opción de Logout
+            // Opción de Logout al final
             ListTile(
               leading: const Icon(Icons.exit_to_app),
               title: const Text('Cerrar sesión'),
               onTap: () {
                 // Limpiar el estado del usuario
                 userProvider.clearUser();
-
                 // Redirigir al login
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()), // Aquí pones la pantalla de login
-                  (Route<dynamic> route) => false, // Elimina las pantallas anteriores de la pila de navegación
+                  MaterialPageRoute(builder: (context) => const LoginScreen()), 
+                  (Route<dynamic> route) => false, 
                 );
               },
             ),
           ],
         ),
       ),
-      backgroundColor: const Color.fromARGB(255, 210, 228, 237),
+      backgroundColor: isDarkMode
+          ? const Color(0xFF121212)  // Color de fondo oscuro
+          : const Color.fromARGB(255, 210, 228, 237),  // Color de fondo claro
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 3, 64, 93),
+        backgroundColor: isDarkMode
+            ? const Color(0xFF1E1E1E)  // Color de AppBar oscuro
+            : const Color.fromARGB(255, 3, 64, 93),  // Color de AppBar claro
         title: const Text(
           "Productos",
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
