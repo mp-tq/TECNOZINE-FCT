@@ -2,7 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_prueba_mil/screens/export/export_options_screen.dart';
 import 'package:flutter_prueba_mil/screens/history/history_screen.dart';
+import 'package:flutter_prueba_mil/screens/login/login_screen.dart'; // Asegúrate de importar la pantalla de login
 import 'package:flutter_prueba_mil/services/database_service.dart';
+import 'package:flutter_prueba_mil/providers/user_provider.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/product_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -29,15 +32,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+
     return Scaffold(
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            const UserAccountsDrawerHeader(
-              accountName: Text('Usuario'),
-              accountEmail: Text('usuario@ejemplo.com'),
-              currentAccountPicture: CircleAvatar(
+            UserAccountsDrawerHeader(
+              accountName: Text(userProvider.name ?? 'Cargando...'),
+              accountEmail: Text(userProvider.email ?? 'Cargando...'),
+              currentAccountPicture: const CircleAvatar(
                 backgroundColor: Colors.white,
                 child: Icon(Icons.person, size: 50.0),
               ),
@@ -46,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.home),
               title: const Text('Inicio'),
               onTap: () {
-                Navigator.pop(context); 
+                Navigator.pop(context);
               },
             ),
             ListTile(
@@ -73,7 +78,23 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.settings),
               title: const Text('Configuración'),
               onTap: () {
-                Navigator.pop(context); 
+                Navigator.pop(context);
+              },
+            ),
+            // Opción de Logout
+            ListTile(
+              leading: const Icon(Icons.exit_to_app),
+              title: const Text('Cerrar sesión'),
+              onTap: () {
+                // Limpiar el estado del usuario
+                userProvider.clearUser();
+
+                // Redirigir al login
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()), // Aquí pones la pantalla de login
+                  (Route<dynamic> route) => false, // Elimina las pantallas anteriores de la pila de navegación
+                );
               },
             ),
           ],
