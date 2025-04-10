@@ -1,8 +1,8 @@
 plugins {
     id("com.android.application")
-    id("com.google.gms.google-services") // Google services plugin
+    id("com.google.gms.google-services")
     id("kotlin-android")
-    id("dev.flutter.flutter-gradle-plugin") // Flutter plugin
+    id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
@@ -13,6 +13,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true 
     }
 
     kotlinOptions {
@@ -29,7 +30,7 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug") // Configuración de firma para debug
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
@@ -38,7 +39,8 @@ flutter {
     source = "../.."
 }
 
-// Dependencias en Kotlin DSL (cambiando a la sintaxis correcta)
 dependencies {
     implementation("com.google.android.gms:play-services-auth:20.0.6")
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
