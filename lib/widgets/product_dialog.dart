@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/database_service.dart';  
 
 class ProductDialog extends StatelessWidget {
   final String producto;
@@ -30,14 +31,18 @@ class ProductDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Tema actual
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Dialog(
-      backgroundColor: Colors.blue[100],
+      backgroundColor: isDarkMode ? Colors.grey[850] : Colors.blue[100],
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(30),
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 214, 228, 239),
+          color: isDarkMode ? Colors.grey[800] : const Color.fromARGB(255, 214, 228, 239),
           borderRadius: BorderRadius.circular(30),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -50,9 +55,10 @@ class ProductDialog extends StatelessWidget {
                 const SizedBox(),
                 Text(
                   producto,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
+                    color: isDarkMode ? Colors.white : Colors.black,  // Color de texto según el tema
                   ),
                 ),
                 CircleAvatar(
@@ -60,18 +66,89 @@ class ProductDialog extends StatelessWidget {
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    icon: const Icon(Icons.close),
+                    icon: Icon(
+                      Icons.close,
+                      color: isDarkMode ? Colors.white : Colors.black,  // Color del ícono según el tema
+                    ),
                   ),
                 ),
               ],
             ),
-            TextField(controller: productoController, decoration: const InputDecoration(labelText: "Nombre del producto")),
-            TextField(controller: descripcionController, decoration: const InputDecoration(labelText: "Descripción")),
-            TextField(controller: categoriaController, decoration: const InputDecoration(labelText: "Categoría")),
-            TextField(controller: stockController, decoration: const InputDecoration(labelText: "Stock")),
-            TextField(controller: precioController, decoration: const InputDecoration(labelText: "Precio")),
+            TextField(
+              controller: productoController,
+              decoration: InputDecoration(
+                labelText: "Nombre del producto",
+                labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black), // Color del label
+              ),
+            ),
+            TextField(
+              controller: descripcionController,
+              decoration: InputDecoration(
+                labelText: "Descripción",
+                labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+              ),
+            ),
+            TextField(
+              controller: categoriaController,
+              decoration: InputDecoration(
+                labelText: "Categoría",
+                labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+              ),
+            ),
+            TextField(
+              controller: stockController,
+              decoration: InputDecoration(
+                labelText: "Stock",
+                labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+              ),
+            ),
+            TextField(
+              controller: precioController,
+              decoration: InputDecoration(
+                labelText: "Precio",
+                labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+              ),
+            ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: onPressed, child: Text(descripcion)),
+            ElevatedButton(
+              onPressed: () {
+                final productoData = {
+                  'producto': productoController.text,
+                  'descripcion': descripcionController.text,
+                  'categoria': categoriaController.text,
+                  'stock': stockController.text,
+                  'precio': precioController.text,
+                };
+
+                if (productoController.text.isNotEmpty) {
+                  String productoId = 'productoId'; 
+                  DatabaseService().updateProduct(productoId, productoData);
+  
+                  // Registro del movimiento (entrada o salida)
+                  int cantidadMovida = int.parse(stockController.text);
+                  if (cantidadMovida > 0) {
+                    DatabaseService().addMovement(
+                      producto: productoController.text,
+                      tipo: 'entrada',
+                      cantidad: cantidadMovida,
+                      comentario: 'Nuevo stock añadido',
+                    );
+                  }
+                }
+                onPressed();
+              },
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.all(
+                  isDarkMode ? Colors.blue[800] : Colors.blue,  // Color de fondo del botón según el tema
+                ),
+              ),
+              child: Text(
+                descripcion,
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black,  // Color del texto en el botón
+                ),
+              ),
+            ),
             const SizedBox(height: 10),
           ],
         ),

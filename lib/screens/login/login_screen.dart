@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_prueba_mil/providers/user_provider.dart';
 import 'package:flutter_prueba_mil/widgets/animated_logo.dart';
-import 'package:flutter_prueba_mil/screens/home/home_screen.dart';
+import 'package:flutter_prueba_mil/controllers/login_controller.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,12 +13,13 @@ class LoginScreen extends StatefulWidget {
   LoginScreenState createState() => LoginScreenState();
 }
 
-class LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
-  final TextEditingController _usernameController = TextEditingController();
+class LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   late AnimationController _controller;
+  bool _isLoading = false;
+  bool _isPasswordVisible = false;
 
   @override
   void initState() {
@@ -26,194 +27,53 @@ class LoginScreenState extends State<LoginScreen>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    )..repeat(reverse: true); // Animación de ida y vuelta
+    )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
-    if (_controller.isAnimating) {
-      _controller.stop();
-    }
     _controller.dispose();
     super.dispose();
   }
 
-  Future<void> _resetPassword() async {
-    String email =
-        _usernameController.text; // Toma el email desde el controlador
-    if (email.isNotEmpty) {
-      try {
-        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
 
-        // Verifica si el widget sigue montado antes de usar BuildContext
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Password reset email sent')),
-          );
-        }
-      } on FirebaseAuthException catch (e) {
-        // Verifica si el widget sigue montado antes de usar BuildContext
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
-        }
-      }
-    } else {
-      // Si el email está vacío, muestra un mensaje de advertencia
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter your email address')),
-        );
-      }
-    }
-  }
+    setState(() => _isLoading = true);
 
-  Future<void> _loginWithEmail() async {
-    if (_formKey.currentState!.validate()) {
-      showDialog(
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      await LoginController.handleLogin(
         context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+        email: _emailController.text,
+        password: _passwordController.text,
+        userProvider: userProvider,
       );
-      try {
-        UserCredential userCredential = await FirebaseAuth.instance
-            .signInWithEmailAndPassword(
-              email: _usernameController.text,
-              password: _passwordController.text,
-            );
-
-        // Verificar si el widget sigue montado antes de usar BuildContext
-        if (mounted) {
-          Navigator.pop(context); // Cierra el indicador de carga
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Welcome, ${userCredential.user?.displayName ?? 'User'}!',
-              ),
-            ),
-          );
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
-        }
-      } on FirebaseAuthException catch (e) {
-        // Verificar si el widget sigue montado antes de usar BuildContext
-        if (mounted) {
-          Navigator.pop(context); // Cierra el indicador de carga
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message ?? 'An error occurred')),
-          );
-        }
-      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _loginWithGoogle() async {
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        // El usuario canceló el inicio de sesión
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Google sign-in was canceled')),
-          );
-        }
-        return;
+  Future<void> _handleGoogleLogin() async {
+  try {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final user = await LoginController.handleGoogleLogin(); // Llama a tu controlador o servicio
+    if (user != null && mounted) {
+      userProvider.setUser(user.email ?? '', user.displayName ?? 'Google User');
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home'); // Navega a la pantalla principal
       }
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
       );
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithCredential(credential);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Welcome, ${userCredential.user?.displayName ?? 'User'}!',
-            ),
-          ),
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.message ?? 'An error occurred during Google sign-in',
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An unexpected error occurred: $e')),
-        );
-      }
     }
   }
-
-  Future<void> _loginWithFacebook() async {
-    try {
-      final LoginResult result = await FacebookAuth.instance.login();
-
-      if (result.status == LoginStatus.success && result.accessToken != null) {
-        // Obtiene el token correctamente
-        final String accessToken = result.accessToken!.token;
-
-        // Usa el token para obtener credenciales
-        final AuthCredential credential = FacebookAuthProvider.credential(
-          accessToken,
-        );
-
-        // Inicia sesión en Firebase con las credenciales
-        UserCredential userCredential = await FirebaseAuth.instance
-            .signInWithCredential(credential);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Welcome, ${userCredential.user?.displayName ?? 'User'}!',
-              ),
-            ),
-          );
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                result.message ?? 'An error occurred during Facebook login',
-              ),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        // Maneja errores de autenticación
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-      }
-    }
-  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +81,7 @@ class LoginScreenState extends State<LoginScreen>
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF0D47A1), Color(0xFF00ACC1)], // Azul y cyan
+            colors: [Color(0xFF0D47A1), Color(0xFF00ACC1)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -232,89 +92,69 @@ class LoginScreenState extends State<LoginScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo animado
               AnimatedLogo(controller: _controller),
               const SizedBox(height: 32.0),
-
-              // Campo de texto para el nombre de usuario
-              TextFormField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  prefixIcon: const Icon(Icons.email, color: Color(0xFF00ACC1)),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  return null;
-                },
-              ),
+              _buildValidatedTextField(_emailController, 'Email', Icons.email, false),
               const SizedBox(height: 16.0),
-
-              // Campo de texto para la contraseña
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  prefixIcon: const Icon(Icons.lock, color: Color(0xFF00ACC1)),
-                ),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
-                  }
-                  return null;
-                },
-              ),
+              _buildValidatedTextField(_passwordController, 'Password', Icons.lock, true),
               const SizedBox(height: 8.0),
-
-              // Botón para restablecer la contraseña
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: _resetPassword,
-                  child: const Text(
-                    'Forgot Password?',
-                    style: TextStyle(color: Color(0xFF00ACC1)),
-                  ),
+                  onPressed: () {},
+                  child: const Text('Forgot Password?', style: TextStyle(color: Color(0xFF00ACC1))),
                 ),
               ),
               const SizedBox(height: 16.0),
-
-              // Botón para iniciar sesión con correo electrónico
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _loginWithEmail,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0D47A1), // Azul oscuro
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  child: const Text('Login'),
-                ),
-              ),
+              _buildLoginButton(),
               const SizedBox(height: 16.0),
-
-              // Botón para iniciar sesión con Google
-              SignInButton(Buttons.Google, onPressed: _loginWithGoogle),
+              SignInButton(Buttons.Google, onPressed: _handleGoogleLogin),
               const SizedBox(height: 16.0),
-
-              // Botón para iniciar sesión con Facebook
-              SignInButton(Buttons.Facebook, onPressed: _loginWithFacebook),
+              SignInButton(Buttons.Facebook, onPressed: () {}),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildValidatedTextField(TextEditingController controller, String label, IconData icon, bool isPassword) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword && !_isPasswordVisible,
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+        prefixIcon: Icon(icon, color: Color(0xFF00ACC1)),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Color(0xFF00ACC1)),
+                onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+              )
+            : null,
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter your $label';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildLoginButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _handleLogin,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF1565C0),
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+        ),
+        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Login', style: TextStyle(color: Colors.white)),
       ),
     );
   }
