@@ -9,6 +9,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
+const AndroidNotificationChannel channel = AndroidNotificationChannel(
+  'stock_alerts', // ID del canal
+  'Stock Alerts', // Nombre del canal
+  description: 'Este canal es para notificaciones de stock bajo',
+  importance: Importance.max,
+);
+
 // Handler para segundo plano
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -33,9 +40,21 @@ Future<void> initNotifications() async {
   );
 
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(channel);
   await _requestPermissions();
 
   await FirebaseMessaging.instance.requestPermission();
+
+  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     if (message.notification != null) {
@@ -67,10 +86,12 @@ Future<void> _requestPermissions() async {
 Future<void> showNotifications({
   required String title,
   required String body,
+  int id = 0,
 }) async {
   const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-    'channelId',
-    'channelName',
+    'stock_alerts',
+    'Stock Alerts',
+    channelDescription: 'Este canal es para notificaciones de stock bajo',
     importance: Importance.max,
     priority: Priority.high,
   );
@@ -80,7 +101,7 @@ Future<void> showNotifications({
   );
 
   await flutterLocalNotificationsPlugin.show(
-    0,
+    id,
     title,
     body,
     notificationDetails,
@@ -103,10 +124,9 @@ Future<void> verificarStockBajo() async {
         await showNotifications(
           title: 'Stock bajo',
           body: 'El producto "$nombre" tiene solo $stock unidades',
+          id: doc.id.hashCode,
         );
       }
     }
-  } catch (e) {
-    ('Error al verificar stock: $e');
-  }
+  } catch (e) {}
 }
